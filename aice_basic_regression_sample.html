@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AICE Basic 회귀 문제 풀이 & 자동 채점 시스템</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Pretendard', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-bold shadow-md shadow-emerald-100">
+          <i class="fa-solid fa-chart-line text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg text-slate-900 leading-tight">AICE Basic 실전 모의평가 (회귀 Regression)</h1>
+          <p class="text-xs text-slate-500">[서비스/세일즈] 통신 이용요금 예측 (수치형 종속변수 회귀 모델링)</p>
+        </div>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-sm font-medium">
+        <button id="tab-btn-0" onclick="switchQuiz(0)" class="tab-btn px-4 py-1.5 rounded-lg transition-all duration-200 text-emerald-700 bg-white shadow-sm font-semibold">
+          회귀 #1 <span class="text-xs opacity-75">(11문항)</span>
+        </button>
+        <button id="tab-btn-1" onclick="switchQuiz(1)" class="tab-btn px-4 py-1.5 rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900">
+          회귀 #2 <span class="text-xs opacity-75">(15문항)</span>
+        </button>
+        <button id="tab-btn-2" onclick="switchQuiz(2)" class="tab-btn px-4 py-1.5 rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900">
+          회귀 #3 <span class="text-xs opacity-75">(15문항)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 flex flex-col md:flex-row gap-6 items-start">
+    
+    <!-- Left / Center: Questions Area -->
+    <div class="w-full md:w-2/3 flex flex-col gap-5">
+      
+      <!-- Quiz Introduction Card -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <span id="quiz-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <i class="fa-solid fa-clipboard-check"></i> <span id="quiz-badge-text">회귀 #1 (11문항 / 100점 만점)</span>
+          </span>
+          <span id="score-rule" class="text-xs font-medium text-slate-500">
+            배점: 1~10번 각 9점 (90점) + 11번 10점 = 총 100점
+          </span>
+        </div>
+        <h2 id="quiz-title" class="text-xl font-bold text-slate-900 mb-2">[문제 회귀 #1]: [서비스/세일즈] 통신 이용 요금 예측</h2>
+        
+        <!-- Background & Data Columns with line-by-line formatting -->
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 text-xs text-slate-700 leading-relaxed space-y-3">
+          <p><strong class="text-slate-900 font-semibold">과제 배경 및 내용:</strong> A통신사 고객마케팅팀에서 모바일 앱을 통해 고객에게 다음 달 납부예정금액 알림 서비스를 제공하기 위해, 과거 요금납부패턴을 AI로 학습시켜 각 고객별 다음 달 납부예정금액(수치형)을 예측하는 AI 회귀 모델링</p>
+          
+          <div class="pt-2 border-t border-slate-200">
+            <div class="font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-table-list text-emerald-600"></i> 데이터 컬럼 정의 (컬럼별 상세 설명)
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-[11px] sm:text-xs">
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70">
+                <span class="font-bold text-emerald-600">label_fee</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">납부 예정금액 (종속변수)</span>
+              </div>
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70">
+                <span class="font-bold text-emerald-600">customer_class</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">고객등급</span>
+              </div>
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70">
+                <span class="font-bold text-emerald-600">customer_level</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">고객 관리수준</span>
+              </div>
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70">
+                <span class="font-bold text-emerald-600">service_category</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">서비스 구분</span>
+              </div>
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70">
+                <span class="font-bold text-emerald-600">agreement_month</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">잔여약정개월수</span>
+              </div>
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70">
+                <span class="font-bold text-emerald-600">installment_yn</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">할부여부</span>
+              </div>
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70">
+                <span class="font-bold text-emerald-600">extra_info1</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">부가정보1</span>
+              </div>
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70">
+                <span class="font-bold text-emerald-600">extra_info2</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">부가정보2</span>
+              </div>
+              <div class="flex items-center gap-2 p-1.5 rounded bg-white border border-slate-200/70 sm:col-span-2">
+                <span class="font-bold text-emerald-600">prev_fee</span>
+                <span class="text-slate-400">:</span>
+                <span class="text-slate-700 font-sans">이전 달 납부금액</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question List Container -->
+      <div id="questions-container" class="flex flex-col gap-5">
+        <!-- Rendered by JavaScript -->
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between gap-4 sticky bottom-4 z-20">
+        <div class="flex items-center gap-3">
+          <button onclick="resetCurrentQuiz()" class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-rotate-left"></i> 다시 풀기
+          </button>
+          <span id="unanswered-counter" class="text-xs text-slate-500 font-medium hidden sm:inline-block">
+            미답변 0문항
+          </span>
+        </div>
+        
+        <button id="submit-btn" onclick="gradeCurrentQuiz()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-sm font-bold shadow-md shadow-emerald-200 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-check-double"></i> 답안 제출 및 채점하기
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Right: Sticky Dashboard / Score Summary -->
+    <aside class="w-full md:w-1/3 md:sticky md:top-20 flex flex-col gap-5">
+      
+      <!-- Score Result Card -->
+      <div id="result-card" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm transition-all duration-300">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-chart-simple text-emerald-500"></i> 풀이 결과 현황
+          </span>
+        </h3>
+
+        <!-- Big Score Display -->
+        <div class="flex items-baseline justify-between mb-3 pb-3 border-b border-slate-100">
+          <div>
+            <div class="text-3xl font-extrabold text-slate-900" id="total-score-display">--<span class="text-base font-semibold text-slate-500"> / 100점</span></div>
+            <div id="grade-status" class="text-xs font-semibold text-slate-400 mt-0.5">답안을 제출하면 채점됩니다.</div>
+          </div>
+          <div id="accuracy-pill" class="hidden px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+            정답률 0%
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="space-y-1.5 mb-5">
+          <div class="flex justify-between text-xs font-medium text-slate-600">
+            <span>응답 완료율</span>
+            <span id="progress-percent">0%</span>
+          </div>
+          <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div id="progress-fill" class="bg-emerald-600 h-full w-0 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <!-- Question Grid Quick Jump -->
+        <div>
+          <div class="text-xs font-semibold text-slate-600 mb-2 flex items-center justify-between">
+            <span>문항 바로가기</span>
+            <span id="answered-count-text" class="text-[11px] text-slate-400">0 / 11 완료</span>
+          </div>
+          <div id="quick-jump-grid" class="grid grid-cols-5 gap-2">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Filter Options after Grading -->
+        <div id="post-grade-tools" class="hidden mt-5 pt-4 border-t border-slate-100 space-y-2">
+          <div class="text-xs font-semibold text-slate-600 mb-1">채점 후 필터</div>
+          <div class="flex gap-2">
+            <button onclick="filterQuestions('all')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors">
+              전체 보기
+            </button>
+            <button onclick="filterQuestions('incorrect')" class="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors">
+              <i class="fa-solid fa-triangle-exclamation"></i> 오답만 보기
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Tips Card -->
+      <div class="bg-gradient-to-br from-emerald-50/70 to-slate-50 rounded-2xl p-5 border border-emerald-100 text-xs text-slate-600 space-y-2.5">
+        <div class="font-bold text-emerald-900 flex items-center gap-1.5">
+          <i class="fa-solid fa-lightbulb text-emerald-600"></i> AICE Basic 회귀 핵심 요령
+        </div>
+        <ul class="list-disc list-inside space-y-1 text-slate-600 leading-relaxed">
+          <li><strong>알고리즘:</strong> 연속형 수치(금액, 개월 등) 예측은 <strong>회귀 모형(Regression)</strong>을 선택합니다.</li>
+          <li><strong>평가지표:</strong> 설명력은 <strong>R²</strong>(높을수록 우수), 오차는 <strong>MAE, MSE</strong>(낮을수록 우수)를 확인합니다.</li>
+          <li><strong>주관식 작성:</strong> 콤마(,)나 단위(명, %, k) 없이 <strong>순수 숫자만</strong> 입력합니다.</li>
+          <li><strong>고도화 MSE:</strong> 오차 지표이므로 고도화 후 MSE 수치는 이전 모델 값보다 낮아져야 개선된 것으로 판정됩니다.</li>
+        </ul>
+      </div>
+
+    </aside>
+  </main>
+
+  <script>
+    const QUIZ_SETS = [
+      {
+        id: 0,
+        badge: "회귀 #1 (11문항 / 100점 만점)",
+        rule: "배점: 1~10번 각 9점 (90점) + 11번 10점 = 총 100점",
+        title: "[문제 회귀 #1]: [서비스/세일즈] 통신 이용 요금 예측",
+        desc: "과제명: 고객 데이터 분석 및 과거 사용요금 패턴 학습을 통해 각 고객별 다음달 납부예정금액을 예측하는 AI 모델 개발",
+        questions: [
+          {
+            num: 1,
+            type: "choice",
+            points: 9,
+            title: "본 과제 해결에 알맞은 알고리즘의 유형을 고르시오.",
+            choices: ["(1) 회귀모형", "(2) 분류모형", "(3) 군집모형", "(4) 시계열모형"],
+            answer: 0,
+            explanation: "본 과제는 다음 달 납부 예정금액(연속형 수치)을 예측하는 과제이므로, 수치형 데이터 예측 문제를 해결하기 위한 회귀모형(Regression)이 적절합니다."
+          },
+          {
+            num: 2,
+            type: "choice",
+            points: 9,
+            title: "다음의 수치형 변수 기술통계량을 확인하고, 제3사분위수(Q3)의 크기가 가장 작은 변수를 고르시오.",
+            choices: [
+              "(1) 잔여약정개월수(agreement_month)",
+              "(2) 부가정보1(extra_info1)",
+              "(3) 부가정보2(extra_info2)",
+              "(4) 이전 달 납부금액(prev_fee)"
+            ],
+            answer: 1,
+            explanation: "데이터 범위 9,000건 전체 조회 기준 Q3 값은 agreement_month: 19.00, extra_info1: 4.00, extra_info2: 9.00, prev_fee: 68022.50으로 가장 작은 변수는 부가정보1(extra_info1, 4.00)입니다."
+          },
+          {
+            num: 3,
+            type: "subjective",
+            points: 9,
+            title: "'고객등급(customer_class)'이 'VVIP'인 고객의 수를 작성하시오.",
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["719"],
+            explanation: "기초정보분석 결과 customer_class의 최빈값 통계에서 Value가 'VVIP'인 고객의 수는 719명(7.99%)입니다."
+          },
+          {
+            num: 4,
+            type: "choice",
+            points: 9,
+            title: "다음의 범주형 변수 기술통계량을 확인하고, 특정 범주에 90%이상의 데이터가 몰려 있는 변수를 고르시오.",
+            choices: [
+              "(1) 고객등급(customer_class)",
+              "(2) 고객 관리수준(customer_level)",
+              "(3) 서비스 구분(service_category)",
+              "(4) 이전 달 납부금액(prev_fee)"
+            ],
+            answer: 2,
+            explanation: "최빈값 비율 확인 결과 customer_class는 42.54%(일반), customer_level은 64.88%(A), service_category는 99.98%(상품A)입니다. 따라서 90% 이상 쏠림이 있는 변수는 서비스 구분(service_category)입니다."
+          },
+          {
+            num: 5,
+            type: "choice",
+            points: 9,
+            title: "각 '고객등급(customer_class)' 별 '납부 예정금액(label_fee)'을 시각화하고, 제1사분위수(Q1)가 가장 낮은 '고객등급(customer_class)'을 고르시오.",
+            choices: ["(1) 일반", "(2) Gold", "(3) Silver", "(4) White"],
+            answer: 0,
+            explanation: "박스차트에서 박스 하단(Q1) 값을 비교하면 '일반' 등급의 제1사분위수가 가장 낮음을 확인할 수 있습니다."
+          },
+          {
+            num: 6,
+            type: "subjective",
+            points: 9,
+            title: "종속변수를 제외한 모든 변수에 대해 결측치가 있는 경우, 수치형 변수는 중앙값, 범주형 변수는 최빈값으로 결측치를 대체하시오. 데이터 가공 후, 변화된 '할부여부(installment_yn)'의 최빈값의 개수를 작성하시오.",
+            conditions: [
+              "수치형 변수: \"label_fee\", \"agreement_month\", \"extra_info1\", \"extra_info2\", \"prev_fee\"",
+              "범주형 변수: \"installment_yn\", \"customer_class\", \"customer_level\", \"service_category\"",
+              "수행 후 [가공 데이터 저장]을 클릭하여 가공된 데이터를 저장하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["4611"],
+            explanation: "결측치 대체 후 생성된 installment_yn_IM 변수의 최빈값은 'N'이며, 그 개수는 4,611개(51.23%)입니다."
+          },
+          {
+            num: 7,
+            type: "choice",
+            points: 9,
+            title: "3개의 머신러닝 모델을 다음과 같은 설정으로 학습하고, 이 중 설명력(R2)이 평균적으로 가장 높은 모델을 선택하시오.",
+            conditions: [
+              "작업 데이터 선택: 문항 6번의 데이터 가공을 통해 신규로 저장된 데이터 사용, 별도의 스케일링 처리 불필요",
+              "학습 유형: 본 과제 해결에 알맞은 알고리즘의 유형을 고려하여 선택 (Regression)",
+              "ML 모델 선택: Linear Regression, Decision Tree Regressor, Random Forest Regressor",
+              "Output 컬럼: \"종속 변수\"를 output 컬럼으로 지정",
+              "Input 컬럼: 문항 4번의 정답 컬럼은 제외 컬럼으로 지정 / 문항 6번의 결측치 처리에 사용된 '변환하기 전의 변수'는 제외 컬럼으로 지정",
+              "Data Parameter 설정: 종속변수의 데이터 유형은 모델 유형에 맞게 설정하고, 나머지는 초기 설정값 사용",
+              "모델 Parameter 설정: 초기 설정값 사용"
+            ],
+            choices: [
+              "(1) Linear Regression",
+              "(2) Decision Tree Regressor",
+              "(3) Random Forest Regressor"
+            ],
+            answer: 2,
+            explanation: "설명력(R2) 비교 결과 Random Forest Regressor(0.9664) > Decision Tree Regressor(0.9549) > Linear Regression(0.9534)로 Random Forest Regressor가 가장 우수합니다."
+          },
+          {
+            num: 8,
+            type: "subjective",
+            points: 9,
+            mseRange: [0.3820, 0.5820],
+            title: "딥러닝 모델을 다음과 같은 설정으로 학습하고, 학습된 모델의 MSE를 작성하시오.",
+            conditions: [
+              "작업 데이터 선택: 문항 6번의 데이터 가공을 통해 신규로 저장된 데이터 사용, 별도의 스케일링 처리 불필요",
+              "Output 컬럼: \"종속 변수\"를 output 컬럼으로 지정",
+              "Input 컬럼: 문항 4번의 정답 컬럼은 제외 컬럼으로 지정 / 문항 6번의 결측치 처리에 사용된 '변환하기 전의 변수'는 제외 컬럼으로 지정 / 범주형 변수는 데이터 인코더를 sparse로 변경",
+              "컬럼 Parameter 설정: 종속변수의 데이터 유형은 모델 유형에 맞게 설정 / 활성함수: relu, FC레이어수: 1, FC레이어크기: 128, 드롭아웃: 0",
+              "학습 Parameter 설정: Epochs: 10, Batch Size: 256, 그 외 초기 설정값 사용",
+              "답안 작성: 모델 학습 후 오른쪽 상단의 [모델 저장] 기능을 통해 모델을 저장하시오. / 정답은 반올림하여 소수점 네 번째 자리까지 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["0.4820"],
+            explanation: "지정된 조건으로 학습된 딥러닝 회귀 모델의 MSE(Mean Squared Error)는 0.4820입니다. (0.4820 ± 0.1 범위인 0.3820 ~ 0.5820 소수점 넷째 자리 작성 시 정답 인정)"
+          },
+          {
+            num: 9,
+            type: "choice",
+            points: 9,
+            title: "문항 8번에서 학습한 딥러닝 모델 분석 결과, '납부 예정금액(label_fee)' 예측에 가장 큰 영향을 주는 변수를 고르시오.",
+            choices: [
+              "(1) 이전 달 납부금액(prev_fee_IM)",
+              "(2) 고객등급(customer_class_IM)",
+              "(3) 잔여약정개월수(agreement_month_IM)",
+              "(4) 할부여부(installment_yn_IM)"
+            ],
+            answer: 0,
+            explanation: "변수 영향도 확인 결과 이전 달 납부금액(prev_fee_IM)의 영향도 수치가 1.9305로 가장 큽니다."
+          },
+          {
+            num: 10,
+            type: "subjective",
+            points: 9,
+            numericRange: [46668, 56668],
+            title: "문항 8번에서 학습한 딥러닝 모델을 활용하여 다음과 같은 조건일 때의 '납부 예정금액(label_fee)'을 예측하시오.",
+            conditions: [
+              "입력값: agreement_month: 18, customer_class: Gold, customer_level: A, extra_info1: 0, extra_info2: 0, installment_yn_IM: Y, prev_fee: 48500",
+              "정답은 반올림하여 정수로 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["51668"],
+            explanation: "시뮬레이션 결과 예측된 label_fee_predictions 값은 약 51,668.28이며, 반올림하여 정수로 작성하면 51668입니다. (51668 ± 5000 범위인 46668 ~ 56668 정답 인정)"
+          },
+          {
+            num: 11,
+            type: "subjective",
+            points: 10,
+            lowerMseThanRef: 7,
+            title: "문항 8번에서 학습한 딥러닝 모델을 고도화하여 MSE를 개선하고, 그 값을 작성하시오.",
+            conditions: [
+              "변수변환, 변수선택, 파라미터 수정 등 자율적으로 수행하시오.",
+              "정답은 반올림하여 소수점 네 번째 자리까지 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["0.4787"],
+            explanation: "Epochs를 30으로 조정하여 고도화한 결과 MSE가 0.4787로 오차가 감소하며 개선되었습니다. (문항 8번 모델 MSE보다 낮고 소수점 넷째 자리 작성 시 정답 인정)"
+          }
+        ]
+      },
+      {
+        id: 1,
+        badge: "회귀 #2 (15문항 / 100점 만점)",
+        rule: "배점: 1~10번 각 6점 (60점) + 11~15번 각 8점 (40점) = 총 100점",
+        title: "[문제 회귀 #2]: [서비스/세일즈] 통신 이용 요금 예측",
+        desc: "과제명: 고객 데이터 분석 및 과거 사용요금 패턴 학습을 통해 각 고객별 다음달 납부예정금액을 예측하는 AI 모델 개발",
+        questions: [
+          {
+            num: 1,
+            type: "choice",
+            points: 6,
+            title: "본 과제 해결에 알맞은 알고리즘의 유형을 고르시오.",
+            choices: ["(1) 회귀모형", "(2) 분류모형", "(3) 군집모형", "(4) 시계열모형"],
+            answer: 0,
+            explanation: "납부 예정금액(연속형 수치 데이터)을 예측하므로 회귀모형이 적절합니다."
+          },
+          {
+            num: 2,
+            type: "choice",
+            points: 6,
+            title: "본 과제의 종속변수의 기술통계량을 확인하고, 최빈값 개수보다 작은 값을 가지는 것을 고르시오.",
+            choices: ["(1) 0의 개수", "(2) 최대값", "(3) 데이터 개수", "(4) 표준편차"],
+            answer: 0,
+            explanation: "종속변수(label_fee)의 최빈값 개수는 1,259개입니다. 0의 개수는 92개, 최대값 118,182.00, 데이터 개수 9,000개, 표준편차 23,873.05이므로 최빈값 개수보다 작은 값은 (1) 0의 개수(92)입니다."
+          },
+          {
+            num: 3,
+            type: "choice",
+            points: 6,
+            title: "다음의 변수 중 변수의 유형(data type)이 다른 것을 고르시오.",
+            choices: [
+              "(1) 잔여약정개월수(agreement_month)",
+              "(2) 부가정보1(extra_info1)",
+              "(3) 고객 관리수준(customer_level)",
+              "(4) 이전 달 납부금액(prev_fee)"
+            ],
+            answer: 2,
+            explanation: "customer_level은 범주형(A, B) 변수이며, 나머지 3개는 모두 수치형 변수입니다."
+          },
+          {
+            num: 4,
+            type: "subjective",
+            points: 6,
+            title: "다음 중 결측치가 가장 많은 변수의 결측치 비율을 작성하시오.",
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["3.33"],
+            explanation: "결측치가 존재하는 변수 중 결측치 비율(missing(%))이 가장 큰 컬럼은 '이전 달 납부금액(prev_fee)'으로 3.33%입니다."
+          },
+          {
+            num: 5,
+            type: "choice",
+            points: 6,
+            title: "'납부 예정금액(label_fee)' 변수와 가장 높은 양의 상관관계를 가지는 변수를 고르시오.",
+            choices: [
+              "(1) 잔여약정개월수(agreement_month)",
+              "(2) 부가정보1(extra_info1)",
+              "(3) 부가정보2(extra_info2)",
+              "(4) 이전 달 납부금액(prev_fee)"
+            ],
+            answer: 3,
+            explanation: "히트맵 확인 결과 이전 달 납부금액(prev_fee)과의 상관계수가 0.99069로 가장 높은 양의 상관관계를 가집니다."
+          },
+          {
+            num: 6,
+            type: "subjective",
+            points: 6,
+            title: "'고객등급(customer_class)'별 '납부 예정금액(label_fee)'의 분포를 확인하고 가장 큰 IQR 값을 작성하시오.",
+            conditions: [
+              "소수 셋째자리에서 반올림하여 소수 둘째자리까지 작성",
+              "단위(k) 없이 숫자만 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["41.55"],
+            explanation: "박스차트 확인 결과 '값없음' 등급의 IQR(Q3 - Q1 = 59.545k - 18k)이 약 41.55k로 가장 큽니다."
+          },
+          {
+            num: 7,
+            type: "subjective",
+            points: 6,
+            title: "'이전 달 납부금액(prev_fee)'이 28k~29.999k 사이의 값을 가지는 데이터 중 '고객등급(customer_class)'이 'White'인 데이터와 'Silver'인 데이터의 수 차이를 작성하시오.",
+            conditions: [
+              "정수로 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["99"],
+            explanation: "해당 구간에서 White 고객 수는 219명, Silver 고객 수는 120명이므로 차이는 219 - 120 = 99입니다."
+          },
+          {
+            num: 8,
+            type: "subjective",
+            points: 6,
+            title: "'잔여약정개월수(agreement_month)'가 0의 값을 가지는 데이터 중 가장 데이터가 많은 '고객등급(customer_class)'을 작성하시오.",
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["VIP"],
+            explanation: "0 구간에서 가장 많은 비율을 차지하는 고객 등급은 'VIP'입니다."
+          },
+          {
+            num: 9,
+            type: "subjective",
+            points: 6,
+            title: "'고객 관리수준(customer_level)'이 'B'인 사람 중 '할부여부(installment_yn)'가 Y인 사람의 '납부 예정금액(label_fee)'의 중앙값을 작성하시오.",
+            conditions: [
+              "단위(k) 없이 숫자만 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["50"],
+            explanation: "박스차트에서 customer_level이 B이고 installment_yn이 Y인 그룹의 median은 50k입니다."
+          },
+          {
+            num: 10,
+            type: "subjective",
+            points: 6,
+            title: "종속변수를 제외한 모든 변수에 대해 결측치가 있는 경우, 수치형 변수는 평균값, 범주형 변수는 최빈값으로 결측치를 대체하시오. 데이터 가공 후, 변화된 '고객등급(customer_class)'의 최빈값의 비율(%)을 작성하시오.",
+            conditions: [
+              "수치형 변수: 'label_fee', 'agreement_month', 'extra_info1', 'extra_info2', 'prev_fee'",
+              "범주형 변수: 'installment_yn', 'customer_class', 'customer_level'",
+              "수행 후 [가공 데이터 저장]을 클릭하여 가공된 데이터를 저장하시오.",
+              "00.00 형식으로 작성하시오. 예시) 12.34"
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["44.77"],
+            explanation: "최빈값 대체 후 생성된 customer_class_IM 컬럼의 최빈값인 'VIP'의 비율은 44.77%입니다."
+          },
+          {
+            num: 11,
+            type: "choice",
+            points: 8,
+            title: "3개의 머신러닝 모델을 다음과 같은 설정으로 학습하고, 이 중 MAE 평균이 최종적으로 가장 작은 모델을 고르시오.",
+            conditions: [
+              "작업데이터 선택: 문항 10번 데이터 가공을 통해 신규로 저장된 데이터 사용, 별도의 스케일링 처리 불필요",
+              "학습유형: Regression (회귀)",
+              "ML 모델 선택: Linear Regression, Decision Tree Regressor, Random Forest Regressor",
+              "Input 컬럼: 문항 10번 결측치 처리에 사용된 '변환하기 전의 변수'는 제외 컬럼으로 지정",
+              "Output 컬럼: \"종속 변수\"를 output 컬럼으로 지정",
+              "Data / 모델 Parameter: 초기 설정값 사용"
+            ],
+            choices: [
+              "(1) Linear Regression",
+              "(2) Decision Tree Regressor",
+              "(3) Random Forest Regressor"
+            ],
+            answer: 2,
+            explanation: "MAE 비교 결과 Random Forest Regressor(1828.62) < Decision Tree Regressor(1900.33) < Linear Regression(3143.45) 순으로 Random Forest Regressor의 MAE가 가장 작습니다."
+          },
+          {
+            num: 12,
+            type: "subjective",
+            points: 8,
+            mseRange: [0.4000, 0.5500],
+            title: "딥러닝 모델을 다음과 같은 설정으로 학습하고, 학습된 모델의 MSE를 작성하시오.",
+            conditions: [
+              "작업 데이터 선택: 문항 10번 데이터 가공을 통해 신규 저장된 데이터 사용, 별도 스케일링 불필요",
+              "Output 컬럼: \"종속 변수\"를 output 컬럼으로 지정",
+              "Input 컬럼: 문항 10번 결측치 처리에 사용된 '변환하기 전의 변수' 제외 / 범주형 변수는 데이터 인코더 sparse 변경",
+              "컬럼 Parameter: 활성함수 relu, FC 레이어수 1, FC 레이어크기 128, 드롭아웃 0",
+              "학습 Parameter: Epochs 10, Batch Size 64, 그 외 초기 설정값 사용",
+              "답안 작성: 모델 저장 후 반올림하여 소수점 네 번째 자리까지 작성"
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["0.4778"],
+            explanation: "학습 완료 후 확인되는 딥러닝 모델의 MSE는 0.4778입니다. (0.4000 ~ 0.5500 범위 소수점 넷째 자리 작성 시 정답 인정)"
+          },
+          {
+            num: 13,
+            type: "choice",
+            points: 8,
+            title: "문항 12번에서 학습한 딥러닝 모델 분석 결과, '납부 예정금액(label_fee)' 예측에 영향을 주는 상위 5개의 변수에 해당하지 않는 것을 고르시오.",
+            choices: [
+              "(1) 부가정보 1(extra_info1)",
+              "(2) 부가정보 2(extra_info2)",
+              "(3) 이전 달 납부금액(prev_fee_IM)",
+              "(4) 잔여약정개월수(agreement_month)"
+            ],
+            answer: 1,
+            explanation: "변수 영향도 확인 결과 부가정보 2(extra_info2)는 상위 5개 변수에 포함되지 않습니다."
+          },
+          {
+            num: 14,
+            type: "subjective",
+            points: 8,
+            numericRange: [46668, 56668],
+            title: "문항 12번에서 학습한 딥러닝 모델을 활용하여 다음과 같은 조건일 때의 '납부 예정금액(label_fee)'을 예측하시오.",
+            conditions: [
+              "입력값: agreement_month_IM: 0, customer_class_IM: 일반, customer_level: A, extra_info1: 0, extra_info2: 13, installment_yn_IM: Y, prev_fee_IM: 50000, service_category: 상품 B",
+              "정답은 반올림하여 정수로 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["51668"],
+            explanation: "시뮬레이션 결과 예측치는 약 51668.28이며, 반올림한 정수는 51668입니다. (51668 ± 5000 범위인 46668 ~ 56668 정답 인정)"
+          },
+          {
+            num: 15,
+            type: "subjective",
+            points: 8,
+            lowerMseThanRef: 11,
+            title: "문항 12번에서 학습한 딥러닝 모델의 파라미터 중 Epochs를 30, 드롭아웃을 0.5로 설정하여 고도화한 후의 MSE를 작성하시오.",
+            conditions: [
+              "정답은 반올림하여 소수점 네 번째 자리까지 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["0.4772"],
+            explanation: "Epochs: 30, Dropout: 0.5로 고도화 학습을 진행한 결과 MSE가 0.4772로 개선되었습니다. (문항 12번 모델 MSE보다 낮고 소수점 넷째 자리 작성 시 정답 인정)"
+          }
+        ]
+      },
+      {
+        id: 2,
+        badge: "회귀 #3 (15문항 / 100점 만점)",
+        rule: "배점: 1~10번 각 6점 (60점) + 11~15번 각 8점 (40점) = 총 100점",
+        title: "[문제 회귀 #3]: [서비스/세일즈] 통신 이용 요금 예측",
+        desc: "과제명: 고객 데이터 분석 및 과거 사용요금 패턴 학습을 통해 각 고객별 다음달 납부예정금액을 예측하는 AI 모델 개발",
+        questions: [
+          {
+            num: 1,
+            type: "choice",
+            points: 6,
+            title: "본 과제 해결에 알맞은 알고리즘의 유형을 고르시오.",
+            choices: ["(1) 회귀모형", "(2) 분류모형", "(3) 군집모형", "(4) 시계열모형"],
+            answer: 0,
+            explanation: "납부 예정금액(연속형 수치 데이터)을 예측하는 과제이므로 회귀모형이 적절합니다."
+          },
+          {
+            num: 2,
+            type: "choice",
+            points: 6,
+            title: "다음의 범주형 변수 기술통계량을 확인하고, 특정 범주에 90%이상의 데이터가 몰려 있는 변수를 고르시오.",
+            choices: [
+              "(1) 고객등급(customer_class)",
+              "(2) 고객 관리수준(customer_level)",
+              "(3) 서비스 구분(service_category)",
+              "(4) 이전 달 납부금액(prev_fee)"
+            ],
+            answer: 2,
+            explanation: "service_category의 최빈값(상품A) 비율이 99.98%로 극심한 불균형(90% 이상 몰림)을 나타냅니다."
+          },
+          {
+            num: 3,
+            type: "choice",
+            points: 6,
+            title: "종속변수에 영향을 미치지 않는 변수로 모델링시 제외해야 하는 변수를 고르시오.",
+            choices: [
+              "(1) 납부 예정금액(label_fee)",
+              "(2) 잔여약정개월수(agreement_month)",
+              "(3) 서비스 구분(service_category)",
+              "(4) 고객등급(customer_class)"
+            ],
+            answer: 2,
+            explanation: "서비스 구분(service_category)은 99.98%가 특정 범주에 쏠려 있어 모델의 과적합을 유발하므로 모델링 시 제외하는 것이 바람직합니다."
+          },
+          {
+            num: 4,
+            type: "subjective",
+            points: 6,
+            title: "'고객등급(customer_class)'이 'VVIP'인 고객의 수를 작성하시오.",
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["719"],
+            explanation: "customer_class 중 Value가 'VVIP'인 고객 수는 719명입니다."
+          },
+          {
+            num: 5,
+            type: "subjective",
+            points: 6,
+            title: "'고객등급(customer_class)'별 '잔여약정개월수(agreement_month)'를 시각화하고, '고객등급(customer_class)'이 'VVIP'인 고객의 IQR을 작성하세요.",
+            conditions: [
+              "반올림하여 소수점 둘째자리까지 표기"
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["20.25"],
+            explanation: "VVIP 고객의 Q3는 20.25, Q1은 0이므로 IQR = Q3 - Q1 = 20.25입니다."
+          },
+          {
+            num: 6,
+            type: "subjective",
+            points: 6,
+            title: "'서비스 구분(service_category)'별 '이전 달 납부금액(prev_fee)'을 시각화하고, '서비스 구분(service_category)'이 '상품A'인 고객의 이상치 중 가장 큰 값을 작성하시오.",
+            conditions: [
+              "반올림하여 소수점 둘째자리까지 표기",
+              "단위(k) 없이 숫자만 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["129.93"],
+            explanation: "박스차트에서 상품A의 upper fence를 벗어난 최대 이상치는 129.93k입니다."
+          },
+          {
+            num: 7,
+            type: "choice",
+            points: 6,
+            title: "각 '고객등급(customer_class)'별 '납부 예정금액(label_fee)'을 시각화하고, 제1사분위수(Q1)가 가장 낮은 '고객등급(customer_class)'을 고르시오.",
+            choices: ["(1) 일반", "(2) Gold", "(3) Silver", "(4) White"],
+            answer: 0,
+            explanation: "박스차트 박스 하단(Q1) 비교 시 제1사분위수가 가장 낮은 등급은 '일반'입니다."
+          },
+          {
+            num: 8,
+            type: "choice",
+            points: 6,
+            title: "'이전 달 납부금액(prev_fee)' 값이 최빈값인 범위를 고르시오.",
+            choices: [
+              "(1) 28k-29.999k",
+              "(2) 30k-31.999k",
+              "(3) 32k-33.999k",
+              "(4) 46k-47.999k"
+            ],
+            answer: 0,
+            explanation: "분포차트 확인 결과 prev_fee 빈도가 가장 높은 구간은 28K-29.999K입니다."
+          },
+          {
+            num: 9,
+            type: "subjective",
+            points: 6,
+            title: "'납부 예정금액(label_fee)'이 '62k~63.9k'에 속하는 고객 중 '고객등급(customer_class)'이 'Gold'인 고객의 수를 작성하시오.",
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["119"],
+            explanation: "해당 구간의 Gold 고객 수는 119명입니다."
+          },
+          {
+            num: 10,
+            type: "subjective",
+            points: 6,
+            title: "종속변수를 제외한 모든 변수에 대해 결측치가 있는 경우, 수치형 변수는 평균값, 범주형 변수는 최빈값으로 결측치를 대체하시오. 데이터 가공 후, 변화된 '잔여약정개월수(agreement_month)'의 표준편차를 작성하시오.",
+            conditions: [
+              "수치형변수: \"label_fee\", \"agreement_month\", \"extra_info1\", \"extra_info2\", \"prev_fee\"",
+              "범주형변수: \"installment_yn\", \"customer_class\", \"customer_level\", \"service_category\"",
+              "수행 후 [가공 데이터 저장]을 클릭하여 가공된 데이터를 저장하시오.",
+              "소수점 둘째자리까지 작성하시오. 예시: 11.11"
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["13.54"],
+            explanation: "결측치 평균 대체 후 새로 생성된 agreement_month_IM 변수의 표준편차(sd)는 13.54입니다."
+          },
+          {
+            num: 11,
+            type: "choice",
+            points: 8,
+            title: "3개의 머신러닝 모델을 다음과 같은 설정으로 학습하고, 이 중 MAE를 기준으로 가장 성능이 높은 모델을 선택하시오.",
+            conditions: [
+              "작업 데이터 선택: 문항 10번 데이터 가공을 통해 신규로 저장된 데이터 사용, 별도의 스케일링 처리 불필요",
+              "학습 유형: Regression (회귀)",
+              "ML 모델 선택: Linear Regression, K Neighbors Regressor, Random Forest Regressor",
+              "Input 컬럼: 문항 3번 정답 컬럼 제외 / 문항 10번 결측치 처리 변환 전 변수 제외",
+              "Output 컬럼: \"종속 변수\"를 output 컬럼으로 지정",
+              "Data / 모델 Parameter: 초기 설정값 사용"
+            ],
+            choices: [
+              "(1) Linear Regression",
+              "(2) K Neighbors Regressor",
+              "(3) Random Forest Regressor"
+            ],
+            answer: 2,
+            explanation: "MAE 비교 결과 Random Forest Regressor(1828.81) < K Neighbors Regressor(2033.40) < Linear Regression(3144.09) 순으로 Random Forest Regressor가 가장 우수합니다."
+          },
+          {
+            num: 12,
+            type: "subjective",
+            points: 8,
+            mseRange: [0.4000, 0.5500],
+            title: "딥러닝 모델을 다음과 같은 설정으로 학습하고, 학습된 모델의 MSE를 작성하시오.",
+            conditions: [
+              "작업 데이터 선택: 문항 10번 데이터 가공을 통해 신규 저장 데이터 사용, 스케일링 불필요",
+              "Output 컬럼: \"종속 변수\" 지정 / Input 컬럼: 제외 컬럼 처리 및 범주형 sparse 인코딩",
+              "컬럼 Parameter: 활성함수 relu, FC레이어수 1, FC레이어크기 128, 드롭아웃 0",
+              "학습 Parameter: Epochs 20, Batch Size 64, 그 외 초기 설정값 사용",
+              "답안 작성: 모델 저장 후 반올림하여 소수점 네 번째 자리까지 작성"
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["0.4780"],
+            explanation: "딥러닝 모델 학습 결과 확인되는 MSE 값은 0.4780입니다. (0.4000 ~ 0.5500 범위 소수점 넷째 자리 작성 시 정답 인정)"
+          },
+          {
+            num: 13,
+            type: "choice",
+            points: 8,
+            title: "문항 12번에서 학습한 딥러닝 모델 분석 결과, '납부 예정금액(label_fee)' 예측에 영향을 주는 상위 5개의 변수에 해당하지 않는 것을 고르시오.",
+            choices: [
+              "(1) 이전 달 납부금액(prev_fee_IM)",
+              "(2) 고객등급(customer_class_IM)",
+              "(3) 잔여약정개월수(agreement_month_IM)",
+              "(4) 부가정보1(extra_info1)"
+            ],
+            answer: 3,
+            explanation: "변수 영향도 확인 결과 부가정보1(extra_info1)은 상위 5개 변수에 포함되지 않습니다."
+          },
+          {
+            num: 14,
+            type: "subjective",
+            points: 8,
+            numericRange: [46668, 56668],
+            title: "문항 12번에서 학습한 딥러닝 모델을 활용하여 다음과 같은 조건일 때의 '납부 예정금액(label_fee)'을 예측하시오.",
+            conditions: [
+              "입력값: agreement_month_IM: 18, customer_class_IM: Gold, customer_level: A, extra_info1: 0, extra_info2: 0, installment_yn_IM: Y, prev_fee_IM: 48500",
+              "정답은 반올림하여 정수로 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["51668"],
+            explanation: "시뮬레이션 결과 예측치는 약 51668.28이며, 반올림한 정수는 51668입니다. (51668 ± 5000 범위인 46668 ~ 56668 정답 인정)"
+          },
+          {
+            num: 15,
+            type: "subjective",
+            points: 8,
+            lowerMseThanRef: 11,
+            title: "문항 12번에서 학습한 딥러닝 모델의 드롭아웃을 0.5로 설정하여 고도화한 후의 MSE를 작성하시오.",
+            conditions: [
+              "변경 파라미터 외에는 12번 설정과 동일",
+              "정답은 반올림하여 소수점 네 번째 자리까지 작성하시오."
+            ],
+            placeholder: "답안을 입력하세요",
+            acceptedAnswers: ["0.4775"],
+            explanation: "드롭아웃 0.5 적용 후 고도화 학습 결과 MSE는 0.4775로 개선되었습니다. (문항 12번 모델 MSE보다 낮고 소수점 넷째 자리 작성 시 정답 인정)"
+          }
+        ]
+      }
+    ];
+
+    let currentQuizIndex = 0;
+    let userAnswers = { 0: {}, 1: {}, 2: {} };
+    let isGraded = { 0: false, 1: false, 2: false };
+
+    window.onload = function() {
+      renderQuiz();
+    };
+
+    function switchQuiz(index) {
+      currentQuizIndex = index;
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        if (i === index) {
+          btn.className = "tab-btn px-4 py-1.5 rounded-lg transition-all duration-200 text-emerald-700 bg-white shadow-sm font-semibold";
+        } else {
+          btn.className = "tab-btn px-4 py-1.5 rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-900";
+        }
+      });
+      renderQuiz();
+    }
+
+    function checkSubjectiveMatch(userInput, acceptedList) {
+      if (!userInput) return false;
+      const cleanInput = String(userInput).trim().toLowerCase();
+      return acceptedList.some(ans => {
+        const cleanAns = String(ans).trim().toLowerCase();
+        return cleanInput === cleanAns || cleanInput === cleanAns + 'k' || cleanInput.replace(/k/g, '') === cleanAns;
+      });
+    }
+
+    function checkAnswerCorrectness(q, userAnswer) {
+      if (userAnswer === undefined || userAnswer === null) return false;
+      if (q.type === 'choice') {
+        return userAnswer === q.answer;
+      } else {
+        const cleanStr = String(userAnswer).trim().replace(/,/g, '');
+
+        // 1. MSE 개선 문항 규칙: 이전 문항 MSE보다 작고 소수점 넷째 자리
+        if (q.lowerMseThanRef !== undefined) {
+          if (!cleanStr) return false;
+          if (!/^0\.\d{4}$/.test(cleanStr)) return false;
+          const val = parseFloat(cleanStr);
+          
+          let refVal = parseFloat(q.acceptedAnswers[0]);
+          const refAns = userAnswers[currentQuizIndex][q.lowerMseThanRef];
+          if (refAns && /^0\.\d{4}$/.test(String(refAns).trim())) {
+            refVal = parseFloat(String(refAns).trim());
+          }
+          return val < refVal && val > 0;
+        }
+
+        // 2. MSE 범위 규칙: [min, max] 및 소수점 넷째 자리
+        if (q.mseRange) {
+          if (!cleanStr) return false;
+          if (!/^0\.\d{4}$/.test(cleanStr)) return false;
+          const val = parseFloat(cleanStr);
+          return val >= q.mseRange[0] && val <= q.mseRange[1];
+        }
+
+        // 3. 수치 범위 규칙 (51668 ± 5000 등)
+        if (q.numericRange) {
+          if (!cleanStr) return false;
+          const val = parseFloat(cleanStr);
+          if (isNaN(val)) return false;
+          return val >= q.numericRange[0] && val <= q.numericRange[1];
+        }
+
+        return checkSubjectiveMatch(cleanStr, q.acceptedAnswers);
+      }
+    }
+
+    function getAcceptedAnswerDisplay(q) {
+      if (q.lowerMseThanRef !== undefined) {
+        let refVal = parseFloat(q.acceptedAnswers[0]);
+        const refAns = userAnswers[currentQuizIndex][q.lowerMseThanRef];
+        if (refAns && /^0\.\d{4}$/.test(String(refAns).trim())) {
+          refVal = parseFloat(String(refAns).trim());
+        }
+        return `이전 모델 값(${refVal.toFixed(4)}) 미만 (소수점 넷째 자리, 기준값: ${q.acceptedAnswers[0]})`;
+      }
+      if (q.mseRange) {
+        return `${q.mseRange[0].toFixed(4)} ~ ${q.mseRange[1].toFixed(4)} (소수점 넷째 자리, 기준값: ${q.acceptedAnswers[0]})`;
+      }
+      if (q.numericRange) {
+        return `${q.numericRange[0]} ~ ${q.numericRange[1]} (기준값: ${q.acceptedAnswers[0]})`;
+      }
+      return q.acceptedAnswers.join(' 또는 ');
+    }
+
+    function renderQuiz() {
+      const quiz = QUIZ_SETS[currentQuizIndex];
+      const graded = isGraded[currentQuizIndex];
+
+      document.getElementById('quiz-badge-text').innerText = quiz.badge;
+      document.getElementById('score-rule').innerText = quiz.rule;
+      document.getElementById('quiz-title').innerText = quiz.title;
+
+      const container = document.getElementById('questions-container');
+      container.innerHTML = '';
+
+      quiz.questions.forEach((q, qIndex) => {
+        const userVal = userAnswers[currentQuizIndex][qIndex];
+        let cardBorder = "border-slate-200";
+        let badgeHtml = "";
+
+        if (graded) {
+          const isCorrect = checkAnswerCorrectness(q, userVal);
+          if (isCorrect) {
+            cardBorder = "border-emerald-300 ring-1 ring-emerald-200 bg-emerald-50/20";
+            badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> 정답 (+${q.points}점)</span>`;
+          } else {
+            cardBorder = "border-rose-300 ring-1 ring-rose-200 bg-rose-50/20";
+            badgeHtml = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 flex items-center gap-1"><i class="fa-solid fa-circle-xmark"></i> 오답 (0/${q.points}점)</span>`;
+          }
+        }
+
+        const card = document.createElement('div');
+        card.id = `q-card-${qIndex}`;
+        card.className = `question-card bg-white rounded-2xl p-6 border ${cardBorder} shadow-sm transition-all duration-200`;
+
+        let conditionsHtml = '';
+        if (q.conditions && q.conditions.length > 0) {
+          const listItems = q.conditions.map(c => `<li class="leading-relaxed flex items-start gap-1.5"><span class="text-emerald-500 font-bold select-none">○</span><span>${c}</span></li>`).join('');
+          conditionsHtml = `
+            <div class="mb-4 p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 font-medium">
+              <div class="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-gear text-emerald-600"></i> 실습 및 문제 조건 설정
+              </div>
+              <ul class="space-y-1 pl-0.5">
+                ${listItems}
+              </ul>
+            </div>
+          `;
+        }
+
+        let questionBodyHtml = '';
+        if (q.type === 'choice') {
+          let choicesHtml = '';
+          q.choices.forEach((choice, cIndex) => {
+            let choiceStyle = "border-slate-200 hover:border-emerald-300 hover:bg-slate-50";
+            let indicatorStyle = "border-slate-300 text-transparent";
+
+            if (userVal === cIndex) {
+              choiceStyle = "border-emerald-600 bg-emerald-50/70 text-emerald-900 font-medium";
+              indicatorStyle = "border-emerald-600 bg-emerald-600 text-white";
+            }
+
+            if (graded) {
+              if (cIndex === q.answer) {
+                choiceStyle = "border-emerald-500 bg-emerald-50 text-emerald-950 font-semibold ring-1 ring-emerald-400";
+                indicatorStyle = "border-emerald-600 bg-emerald-600 text-white";
+              } else if (userVal === cIndex && userVal !== q.answer) {
+                choiceStyle = "border-rose-400 bg-rose-50 text-rose-950 font-medium line-through decoration-rose-400";
+                indicatorStyle = "border-rose-500 bg-rose-500 text-white";
+              }
+            }
+
+            choicesHtml += `
+              <label onclick="selectChoice(${qIndex}, ${cIndex})" class="flex items-center gap-3 p-3.5 rounded-xl border ${choiceStyle} cursor-pointer transition-all duration-150 select-none">
+                <div class="w-5 h-5 rounded-full border-2 ${indicatorStyle} flex items-center justify-center text-[10px] flex-shrink-0 transition-all">
+                  <i class="fa-solid fa-check"></i>
+                </div>
+                <span class="text-sm leading-relaxed">${choice}</span>
+              </label>
+            `;
+          });
+          questionBodyHtml = `<div class="flex flex-col gap-2.5">${choicesHtml}</div>`;
+        } else {
+          let inputBorder = "border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100";
+          let currentVal = userVal !== undefined ? userVal : '';
+
+          if (graded) {
+            const isCorrect = checkAnswerCorrectness(q, userVal);
+            inputBorder = isCorrect ? "border-emerald-500 bg-emerald-50/40 text-emerald-900 font-semibold" : "border-rose-500 bg-rose-50/40 text-rose-900 font-semibold";
+          }
+
+          questionBodyHtml = `
+            <div class="space-y-2">
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="subj-input-${qIndex}"
+                  value="${currentVal}"
+                  placeholder="${q.placeholder || '답안을 입력하세요'}"
+                  ${graded ? 'disabled' : ''}
+                  oninput="handleSubjectiveInput(${qIndex}, this.value)"
+                  class="w-full sm:w-80 px-4 py-3 rounded-xl border ${inputBorder} text-sm transition-all outline-none"
+                />
+              </div>
+              ${graded ? `
+                <div class="text-xs ${checkAnswerCorrectness(q, userVal) ? 'text-emerald-700' : 'text-rose-600'} font-medium flex items-center gap-1.5 pt-1">
+                  <span>작성한 답: <strong class="underline">${currentVal || '(미입력)'}</strong></span>
+                  <span class="text-slate-400">|</span>
+                  <span>인정 정답: <strong class="text-emerald-700 font-semibold">${getAcceptedAnswerDisplay(q)}</strong></span>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
+
+        let explanationHtml = '';
+        if (graded) {
+          const standardAnswer = q.type === 'choice' ? q.choices[q.answer] : getAcceptedAnswerDisplay(q);
+          explanationHtml = `
+            <div class="mt-4 pt-4 border-t border-slate-100 bg-slate-50/80 -mx-6 -mb-6 p-6 rounded-b-2xl">
+              <div class="flex items-center gap-2 text-xs font-bold text-slate-700 mb-1.5">
+                <i class="fa-solid fa-circle-info text-emerald-600"></i> 상세 해설 & 풀이 근거
+              </div>
+              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">${q.explanation}</p>
+              <div class="mt-2.5 text-xs text-emerald-700 font-semibold flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">모범 정답</span>
+                <span>${standardAnswer}</span>
+              </div>
+            </div>
+          `;
+        }
+
+        const typeBadge = q.type === 'choice' 
+          ? `<span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">객관식</span>`
+          : `<span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">주관식</span>`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-200">
+                Q${q.num}
+              </span>
+              ${typeBadge}
+              <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                ${q.points}점
+              </span>
+            </div>
+            ${badgeHtml}
+          </div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-3 leading-snug">
+            [문제 ${q.num}] ${q.title}
+          </h3>
+          ${conditionsHtml}
+          ${questionBodyHtml}
+          ${explanationHtml}
+        `;
+
+        container.appendChild(card);
+      });
+
+      updateDashboard();
+    }
+
+    function selectChoice(qIndex, choiceIndex) {
+      if (isGraded[currentQuizIndex]) return;
+      userAnswers[currentQuizIndex][qIndex] = choiceIndex;
+      renderQuiz();
+    }
+
+    function handleSubjectiveInput(qIndex, value) {
+      if (isGraded[currentQuizIndex]) return;
+      userAnswers[currentQuizIndex][qIndex] = value;
+      updateDashboard();
+    }
+
+    function updateDashboard() {
+      const quiz = QUIZ_SETS[currentQuizIndex];
+      const answers = userAnswers[currentQuizIndex];
+      const totalQuestions = quiz.questions.length;
+      const graded = isGraded[currentQuizIndex];
+
+      let answeredCount = 0;
+      quiz.questions.forEach((q, i) => {
+        const val = answers[i];
+        if (val !== undefined && String(val).trim() !== '') {
+          answeredCount++;
+        }
+      });
+
+      const percent = Math.round((answeredCount / totalQuestions) * 100);
+      document.getElementById('progress-percent').innerText = `${percent}%`;
+      document.getElementById('progress-fill').style.width = `${percent}%`;
+      document.getElementById('answered-count-text').innerText = `${answeredCount} / ${totalQuestions} 완료`;
+
+      const unanswered = totalQuestions - answeredCount;
+      document.getElementById('unanswered-counter').innerText = unanswered > 0 ? `미답변 ${unanswered}문항` : `모든 문항 답변 완료`;
+
+      const grid = document.getElementById('quick-jump-grid');
+      grid.innerHTML = '';
+      quiz.questions.forEach((q, i) => {
+        const val = answers[i];
+        const isAnswered = val !== undefined && String(val).trim() !== '';
+        let btnColor = "bg-slate-100 text-slate-600 hover:bg-slate-200 border-slate-200";
+
+        if (isAnswered) {
+          btnColor = "bg-emerald-50 text-emerald-700 font-bold border-emerald-300";
+        }
+
+        if (graded) {
+          const isCorrect = checkAnswerCorrectness(q, val);
+          btnColor = isCorrect 
+            ? "bg-emerald-500 text-white font-bold border-emerald-600 shadow-sm" 
+            : "bg-rose-500 text-white font-bold border-rose-600 shadow-sm";
+        }
+
+        const jumpBtn = document.createElement('button');
+        jumpBtn.className = `h-9 text-xs rounded-lg border transition-all flex items-center justify-center font-medium ${btnColor}`;
+        jumpBtn.innerText = `Q${q.num}`;
+        jumpBtn.onclick = () => {
+          const el = document.getElementById(`q-card-${i}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+        grid.appendChild(jumpBtn);
+      });
+
+      if (graded) {
+        let earnedScore = 0;
+        let correctCount = 0;
+        quiz.questions.forEach((q, i) => {
+          const val = answers[i];
+          if (checkAnswerCorrectness(q, val)) {
+            earnedScore += q.points;
+            correctCount++;
+          }
+        });
+
+        document.getElementById('total-score-display').innerHTML = `${earnedScore}<span class="text-base font-semibold text-slate-500"> / 100점</span>`;
+        document.getElementById('grade-status').innerText = `${totalQuestions}문항 중 ${correctCount}개 정답`;
+
+        const accuracyPill = document.getElementById('accuracy-pill');
+        accuracyPill.classList.remove('hidden');
+        const acc = Math.round((correctCount / totalQuestions) * 100);
+        accuracyPill.innerText = `정답률 ${acc}%`;
+        if (earnedScore >= 80) {
+          accuracyPill.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800";
+        } else if (earnedScore >= 60) {
+          accuracyPill.className = "px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800";
+        } else {
+          accuracyPill.className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800";
+        }
+
+        document.getElementById('post-grade-tools').classList.remove('hidden');
+        document.getElementById('submit-btn').innerHTML = `<i class="fa-solid fa-check"></i> 채점 완료`;
+        document.getElementById('submit-btn').classList.replace('bg-emerald-600', 'bg-slate-400');
+        document.getElementById('submit-btn').disabled = true;
+      } else {
+        document.getElementById('total-score-display').innerHTML = `--<span class="text-base font-semibold text-slate-500"> / 100점</span>`;
+        document.getElementById('grade-status').innerText = `답안 제출 시 즉시 자동 채점됩니다.`;
+
+        document.getElementById('accuracy-pill').classList.add('hidden');
+        document.getElementById('post-grade-tools').classList.add('hidden');
+        document.getElementById('submit-btn').innerHTML = `<i class="fa-solid fa-check-double"></i> 답안 제출 및 채점하기`;
+        document.getElementById('submit-btn').classList.replace('bg-slate-400', 'bg-emerald-600');
+        document.getElementById('submit-btn').disabled = false;
+      }
+    }
+
+    function gradeCurrentQuiz() {
+      isGraded[currentQuizIndex] = true;
+      renderQuiz();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetCurrentQuiz() {
+      userAnswers[currentQuizIndex] = {};
+      isGraded[currentQuizIndex] = false;
+      renderQuiz();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function filterQuestions(type) {
+      const quiz = QUIZ_SETS[currentQuizIndex];
+      const answers = userAnswers[currentQuizIndex];
+
+      quiz.questions.forEach((q, i) => {
+        const card = document.getElementById(`q-card-${i}`);
+        if (!card) return;
+
+        if (type === 'all') {
+          card.classList.remove('hidden');
+        } else if (type === 'incorrect') {
+          const isCorrect = checkAnswerCorrectness(q, answers[i]);
+          if (isCorrect) {
+            card.classList.add('hidden');
+          } else {
+            card.classList.remove('hidden');
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
